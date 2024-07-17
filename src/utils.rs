@@ -1,13 +1,39 @@
 use pyo3::prelude::*;
-use pyo3::types::any::PyAnyMethods;
-use pyo3::types::PyList;
+use pyo3::types::{PyDict, PyList};
 
-pub fn visit_list<'py>(py: Python<'py>, list: &PyList, visit_fn: &PyObject) -> PyResult<PyObject> {
+pub fn visit_list<'py>(
+    py: Python<'py>,
+    list: &Bound<'py, PyList>,
+    visit_fn: &PyObject,
+    return_data: bool,
+    max_depth: i64,
+    context: Option<&Bound<'py, PyDict>>,
+) -> PyResult<PyObject> {
     let mut new_list = Vec::new();
-    let bound_list: Bound<'py, PyList> = list.as_borrowed(py).to_owned();
-    for item in bound_list.iter()? {
-        let result = visit_fn.call1(py, (item?,))?;
-        new_list.push(result);
+
+    for item in list.iter() {
+        let result = if max_depth != 0 && item.is_instance_of::<PyList>() && context.is_none() {
+            let nested_list = item.downcast::<PyList>()?;
+            visit_list(
+                py,
+                nested_list,
+                visit_fn,
+                return_data,
+                max_depth - 1,
+                context,
+            )?
+        } else {
+            visit_fn.call1(py, (item,))?
+        };
+
+        if return_data {
+            new_list.push(result);
+        }
     }
-    Ok(PyList::new_bound(py, new_list).into())
+
+    if return_data {
+        Ok(PyList::new_bound(py, new_list).into())
+    } else {
+        Ok(py.None().into())
+    }
 }
