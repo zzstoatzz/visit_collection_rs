@@ -89,6 +89,10 @@ if __name__ == "__main__":
             True,
         )
 
+    assert (
+        rs_result == py_result
+    ), f"Rust implementation doesn't match Python. Python: {py_result}, Rust: {rs_result}"
+
     console.print("\n[bold green]Training complete![/bold green]")
 
     display_team(rs_result, "Final Pokémon Team (Rust Implementation)")
