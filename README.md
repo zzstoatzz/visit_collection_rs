@@ -1,5 +1,4 @@
 ```
-python pokemon.py
 ╭────────────────────────────────────────────╮
 │ Welcome to the Pokémon Training Simulator! │
 ╰────────────────────────────────────────────╯
@@ -40,11 +39,11 @@ Benchmarking Results:
 ┏━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
 ┃ Implementation ┃ Time (seconds) ┃
 ┡━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
-│ Rust           │ 0.2936         │
-│ Python         │ 4.8894         │
+│ Rust           │ 0.1199         │
+│ Python         │ 4.8111         │
 └────────────────┴────────────────┘
 
-Rust implementation is 16.65x faster than Python!
+Rust implementation is 40.13x faster than Python!
 
 Verifying original team (should be unchanged):
 Original Pokémon Team
