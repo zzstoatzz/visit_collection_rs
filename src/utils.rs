@@ -34,6 +34,6 @@ pub fn visit_list<'py>(
     if return_data {
         Ok(PyList::new_bound(py, new_list).into())
     } else {
-        Ok(py.None().into())
+        Ok(py.None())
     }
 }
