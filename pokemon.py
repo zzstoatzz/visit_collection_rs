@@ -46,7 +46,7 @@ def benchmark(func, input_data, progress, task, *args, rounds=TRAINING_ROUNDS):
     result = input_data
     for i in range(rounds):
         result = func(result, *args)
-        if (i + 1) % (rounds // 100) == 0:  # Update progress every 1%
+        if (i + 1) % (rounds // 100) == 0:
             progress.update(task, advance=rounds // 100)
     end_time = time.time()
     return result, end_time - start_time
