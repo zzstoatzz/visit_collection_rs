@@ -1,4 +1,5 @@
 import time
+from functools import partial
 
 from prefect.utilities.collections import visit_collection as visit_collection_py
 from rich.console import Console
@@ -41,13 +42,14 @@ def display_team(team, title):
     console.print(table)
 
 
-def benchmark(func, input_data, progress, task, *args, rounds=TRAINING_ROUNDS):
+def benchmark(func, input_data, *args, progress_args=None):
+    progress, task = progress_args
     start_time = time.time()
     result = input_data
-    for i in range(rounds):
+    for i in range(TRAINING_ROUNDS):
         result = func(result, *args)
-        if (i + 1) % (rounds // 100) == 0:
-            progress.update(task, advance=rounds // 100)
+        if (i + 1) % (TRAINING_ROUNDS // 100) == 0:
+            progress.update(task, advance=TRAINING_ROUNDS // 100)
     end_time = time.time()
     return result, end_time - start_time
 
@@ -71,21 +73,18 @@ if __name__ == "__main__":
         task = progress.add_task("[cyan]Training Pokémon...", total=TRAINING_ROUNDS)
 
         console.print("Benchmarking Rust implementation...")
-        rs_result, rs_time = benchmark(
+        bench = partial(benchmark, progress_args=(progress, task))
+        rs_result, rs_time = bench(
             visit_collection,
             pokemon_team,
-            progress,
-            task,
             level_up,
             True,
         )
 
         console.print("Benchmarking Python implementation...")
-        py_result, py_time = benchmark(
+        py_result, py_time = bench(
             visit_collection_py,
             pokemon_team,
-            progress,
-            task,
             level_up,
             True,
         )
