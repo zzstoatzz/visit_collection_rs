@@ -1,11 +1,11 @@
 ```
-» python pokemon.py
+python pokemon.py
 ╭────────────────────────────────────────────╮
 │ Welcome to the Pokémon Training Simulator! │
 ╰────────────────────────────────────────────╯
 Your team has 5 Pokémon.
 
-Initial Pokémon Team
+Initial Pokémon Team 
 ┏━━━━━━━━━━━┳━━━━━━━┓
 ┃ Name      ┃ Level ┃
 ┡━━━━━━━━━━━╇━━━━━━━┩
@@ -17,13 +17,13 @@ Initial Pokémon Team
 └───────────┴───────┘
 
 Starting intense training...
-⠋ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Training Pokémon...   0%Benchmarking Rust implementation...
-⠹ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╸━━━━━━━━━ Training Pokémon...  77%Benchmarking Python implementation...
+Benchmarking Rust implementation...
+Benchmarking Python implementation...
   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ Training Pokémon... 100%
 
 Training complete!
-  Final Pokémon Team
-(Rust Implementation)
+  Final Pokémon Team  
+(Rust Implementation) 
 ┏━━━━━━━━━━━┳━━━━━━━━┓
 ┃ Name      ┃ Level  ┃
 ┡━━━━━━━━━━━╇━━━━━━━━┩
@@ -35,16 +35,16 @@ Training complete!
 └───────────┴────────┘
 
 Benchmarking Results:
-   Performance Comparison (1000
-              rounds)
+  Performance Comparison (100000   
+              rounds)              
 ┏━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━┓
 ┃ Implementation ┃ Time (seconds) ┃
 ┡━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━┩
-│ Rust           │ 0.2953         │
-│ Python         │ 4.9927         │
+│ Rust           │ 0.2936         │
+│ Python         │ 4.8894         │
 └────────────────┴────────────────┘
 
-Rust implementation is 16.91x faster than Python!
+Rust implementation is 16.65x faster than Python!
 
 Verifying original team (should be unchanged):
 Original Pokémon Team

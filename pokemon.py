@@ -95,7 +95,7 @@ if __name__ == "__main__":
     display_team(rs_result, "Final Pokémon Team (Rust Implementation)")
 
     console.print("\n[bold]Benchmarking Results:[/bold]")
-    benchmark_table = Table(title="Performance Comparison (1000 rounds)")
+    benchmark_table = Table(title=f"Performance Comparison ({TRAINING_ROUNDS} rounds)")
     benchmark_table.add_column("Implementation", style="cyan")
     benchmark_table.add_column("Time (seconds)", style="magenta")
     benchmark_table.add_row("Rust", f"{rs_time:.4f}")
