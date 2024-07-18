@@ -13,3 +13,11 @@ classifiers = [
 dynamic = ["version"]
 [tool.maturin]
 features = ["pyo3/extension-module"]
+
+[project.optional-dependencies]
+dev = [
+    "maturin",
+    "pytest",
+    "ipython",
+    "prefect@git+https://github.com/PrefectHQ/prefect.git",
+]
