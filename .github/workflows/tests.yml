@@ -1,8 +1,6 @@
-name: Run tests
+name: run tests
 
 env:
-  # enable colored output
-  # https://github.com/pytest-dev/pytest/issues/7443
   PY_COLORS: 1
 
 on:
@@ -20,10 +18,8 @@ jobs:
     timeout-minutes: 15
     strategy:
       matrix:
-        # os: [ubuntu-latest, macos-latest, windows-latest]
-        os: [ubuntu-latest]
-        # python-version: ['3.9', '3.10', '3.11', '3.12']
-        python-version: ["3.9", "3.12"]
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: ['3.9', '3.12']
 
     runs-on: ${{ matrix.os }}
 
@@ -38,9 +34,9 @@ jobs:
       - name: download uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
-      - name: Install ControlFlow
+      - name: install dependencies
         run: uv pip install --system ".[dev]"
 
-      - name: Run tests
+      - name: run tests
         run: pytest -vv
         if: ${{ !(github.event.pull_request.head.repo.fork) }}
