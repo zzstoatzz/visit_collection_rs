@@ -1,8 +1,7 @@
 use pyo3::prelude::*;
 use pyo3::types::{PyAny, PyDict, PyList, PySet};
 
-mod utils;
-
+mod list;
 #[pyfunction]
 #[pyo3(signature = (
     expr,
@@ -27,14 +26,17 @@ fn visit_collection<'py>(
     let _ = (remove_annotations, _seen); // TODO: use these
 
     if let Ok(list) = expr.downcast::<PyList>() {
-        utils::visit_list(py, list, &visit_fn, return_data, max_depth, context)
-    } else {
-        let result = visit_fn.call1(py, (expr,))?;
-        if return_data {
-            Ok(result)
+        list::visit_list(py, list, &visit_fn, return_data, max_depth, context)
+    } else if max_depth != 0 {
+        if let Some(ctx) = context {
+            visit_fn.call1(py, (expr, ctx))
         } else {
-            Ok(py.None())
+            visit_fn.call1(py, (expr,))
         }
+    } else if return_data {
+        Ok(expr.to_object(py))
+    } else {
+        Ok(py.None())
     }
 }
 
