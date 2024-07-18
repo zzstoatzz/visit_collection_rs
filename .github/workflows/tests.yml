@@ -31,6 +31,17 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: UV Cache
+        # Manually cache the uv cache directory
+        # until setup-python supports it:
+        # https://github.com/actions/setup-python/issues/822
+        uses: actions/cache@v4
+        id: cache-uv
+        with:
+          path: ~/.cache/uv
+          key: uvcache-${{ runner.os }}-${{ matrix.python-version }}-${{ hashFiles('pyproject.toml') }}
+
+
       - name: download uv
         run: curl -LsSf https://astral.sh/uv/install.sh | sh
 
