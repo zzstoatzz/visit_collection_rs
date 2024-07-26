@@ -12,33 +12,53 @@ console = Console()
 
 TRAINING_ROUNDS = 100_000
 
-# Define a list of Pokémon with their levels
+# we support only lists and dicts (but arbitrary nesting is possible)
 pokemon_team = [
-    {"name": "Pikachu", "level": 25},
-    {"name": "Charizard", "level": 36},
-    {"name": "Bulbasaur", "level": 15},
-    {"name": "Gyarados", "level": 30},
-    {"name": "Mewtwo", "level": 70},
+    {
+        "name": "Pikachu",
+        "level": 25,
+        "stats": {"hp": 60, "attack": 55, "defense": 40},
+        "moves": ["Thunderbolt", "Quick Attack"],
+    },
+    {
+        "name": "Charizard",
+        "level": 36,
+        "stats": {"hp": 78, "attack": 84, "defense": 78},
+        "moves": ["Flamethrower", "Wing Attack", "Dragon Claw"],
+    },
+    {
+        "name": "Bulbasaur",
+        "level": 15,
+        "stats": {"hp": 45, "attack": 49, "defense": 49},
+        "moves": ["Vine Whip", "Tackle"],
+    },
 ]
 
 
-def level_up(pokemon):
-    """Level up the Pokémon."""
-    if isinstance(pokemon, dict):
-        return {
-            "name": pokemon["name"],
-            "level": pokemon["level"] + 1,
-            "message": f"{pokemon['name']} leveled up to {pokemon['level'] + 1}!",
-        }
-    return pokemon
+def train_pokemon(item):
+    """Train the Pokémon, improving its level, stats, and moves."""
+    if isinstance(item, dict):
+        if "level" in item:  # This is a Pokémon
+            item["level"] += 1
+            if len(item["moves"]) < 4 and item["level"] % 5 == 0:
+                item["moves"].append("New Move")
+        elif item.keys() <= {"hp", "attack", "defense"}:  # This is a stats dict
+            return {stat: value + 1 for stat, value in item.items()}
+    elif isinstance(item, int):  # This could be a stat value
+        return item + 1
+    return item
 
 
 def display_team(team, title):
     table = Table(show_header=True, header_style="bold cyan")
     table.add_column("Name", style="bold white", no_wrap=True)
     table.add_column("Level", style="bold magenta")
+    table.add_column("Stats", style="bold green")
+    table.add_column("Moves", style="bold yellow")
     for pokemon in team:
-        table.add_row(pokemon["name"], str(pokemon["level"]))
+        stats_str = ", ".join(f"{k}: {v}" for k, v in pokemon["stats"].items())
+        moves_str = ", ".join(pokemon["moves"])
+        table.add_row(pokemon["name"], str(pokemon["level"]), stats_str, moves_str)
     console.print(
         Panel(
             table, title=title, title_align="left", border_style="dim", padding=(1, 2)
@@ -50,9 +70,9 @@ def benchmark(func, input_data, *args, progress_args=None):
     progress, task = progress_args
     start_time = time.time()
     result = input_data
-    for I in range(TRAINING_ROUNDS):
+    for i in range(TRAINING_ROUNDS):
         result = func(result, *args)
-        if (I + 1) % (TRAINING_ROUNDS // 100) == 0:
+        if (i + 1) % (TRAINING_ROUNDS // 100) == 0:
             progress.update(task, advance=TRAINING_ROUNDS // 100)
     end_time = time.time()
     return result, end_time - start_time
@@ -61,7 +81,7 @@ def benchmark(func, input_data, *args, progress_args=None):
 if __name__ == "__main__":
     console.print(
         Panel(
-            "Pokémon Training Simulator",
+            "Pokémon Advanced Training Simulator",
             style="bold white on black",
             border_style="dim",
             padding=(1, 2),
@@ -96,7 +116,7 @@ if __name__ == "__main__":
                     benchmark,
                     visit_collection,
                     pokemon_team,
-                    level_up,
+                    train_pokemon,
                     True,
                     progress_args=(progress, rust_task),
                 ): "Rust",
@@ -104,7 +124,7 @@ if __name__ == "__main__":
                     benchmark,
                     visit_collection_py,
                     pokemon_team,
-                    level_up,
+                    train_pokemon,
                     True,
                     progress_args=(progress, python_task),
                 ): "Python",
