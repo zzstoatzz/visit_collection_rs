@@ -1,3 +1,4 @@
+use crate::{do_visit_collection, maybe_copy_context};
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PyList, PySet};
 
@@ -12,31 +13,37 @@ pub fn visit_list(
     remove_annotations: bool,
     seen: Option<&PySet>,
 ) -> PyResult<PyObject> {
-    // At this point, visit_fn has already been called on the current list by do_visit_collection
-    // and max_depth/seen checks have been performed.
-    // Our job is to visit each child with a fresh visit_collection call
-
+    // Already visited current list and checked max_depth/seen in do_visit_collection
     let mut modified = false;
-    let mut new_items = Vec::with_capacity(list.len());
+
+    let sub_context = maybe_copy_context(py, context)?;
+
+    let mut new_items = if return_data {
+        Vec::with_capacity(list.len())
+    } else {
+        Vec::new() // might not use if no return_data
+    };
 
     for item in list.iter() {
-        // Each child gets a fresh visit_collection call with max_depth-1 and copied context
-        let visited_item = super::do_visit_collection(
+        let visited_item = do_visit_collection(
             py,
             item,
             visit_fn,
             return_data,
             max_depth - 1,
-            super::copy_context(py, context)?,
+            sub_context,
             remove_annotations,
             seen,
         )?;
 
-        if return_data && !visited_item.as_ref(py).is(item) {
-            modified = true;
+        if return_data {
+            if !visited_item.as_ref(py).is(item) {
+                modified = true;
+            }
+            new_items.push(visited_item);
+        } else {
+            // no return_data, just call visit_fn for side effects
         }
-
-        new_items.push(visited_item);
     }
 
     if return_data {

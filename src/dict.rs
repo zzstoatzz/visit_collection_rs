@@ -1,3 +1,4 @@
+use crate::{do_visit_collection, maybe_copy_context};
 use pyo3::prelude::*;
 use pyo3::types::{PyDict, PySet};
 
@@ -12,47 +13,61 @@ pub fn visit_dict(
     remove_annotations: bool,
     seen: Option<&PySet>,
 ) -> PyResult<PyObject> {
-    // At this point, visit_fn has already been called on the current dict by do_visit_collection
-    // and max_depth/seen checks have been performed.
-    // Our job is to visit each child with a fresh visit_collection call
+    // Already visited the current dict and checked max_depth/seen in do_visit_collection
 
+    // If no return_data, we never need to allocate new data unless children are changed
+    // We'll track modification
     let mut modified = false;
-    let new_dict = PyDict::new(py);
+    let new_dict = if return_data {
+        Some(PyDict::new(py))
+    } else {
+        None
+    };
+
+    // Copy context once per dict, not for every item
+    let sub_context = maybe_copy_context(py, context)?;
 
     for (key, value) in dict.iter() {
-        // Each child gets a fresh visit_collection call with max_depth-1 and copied context
-        let visited_key = super::do_visit_collection(
+        let visited_key = do_visit_collection(
             py,
             key,
             visit_fn,
             return_data,
             max_depth - 1,
-            super::copy_context(py, context)?,
+            sub_context,
             remove_annotations,
             seen,
         )?;
 
-        let visited_value = super::do_visit_collection(
+        let visited_value = do_visit_collection(
             py,
             value,
             visit_fn,
             return_data,
             max_depth - 1,
-            super::copy_context(py, context)?,
+            sub_context,
             remove_annotations,
             seen,
         )?;
 
-        if return_data && (!visited_key.as_ref(py).is(key) || !visited_value.as_ref(py).is(value)) {
-            modified = true;
-        }
+        if return_data {
+            if !visited_key.as_ref(py).is(key) || !visited_value.as_ref(py).is(value) {
+                modified = true;
+            }
 
-        new_dict.set_item(visited_key, visited_value)?;
+            // unwrap is safe because we only use new_dict if return_data = true
+            new_dict
+                .as_ref()
+                .unwrap()
+                .set_item(visited_key, visited_value)?;
+        } else {
+            // return_data = false, we do not store results
+        }
     }
 
     if return_data {
         if modified {
-            Ok(new_dict.to_object(py))
+            Ok(new_dict.unwrap().to_object(py))
         } else {
             Ok(dict.to_object(py))
         }

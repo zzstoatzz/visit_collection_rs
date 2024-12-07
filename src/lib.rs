@@ -1,23 +1,35 @@
+use once_cell::sync::OnceCell;
 use pyo3::prelude::*;
 use pyo3::types::{PyAny, PyDict, PyList, PySet};
 
 mod dict;
 mod list;
 
-// Add this near the top of lib.rs, after the imports and before the modules
-pub(crate) fn copy_context<'py>(
+// Only copy context if needed, and try to reuse where possible
+pub(crate) fn maybe_copy_context<'py>(
     py: Python<'py>,
     context: Option<&PyDict>,
 ) -> PyResult<Option<&'py PyDict>> {
-    Ok(if let Some(ctx) = context {
+    if let Some(ctx) = context {
+        // If context might be modified by visit_fn and must not leak upward
+        // we must copy. If not, consider returning the same reference.
         let new_ctx = PyDict::new(py);
         for (k, v) in ctx.iter() {
             new_ctx.set_item(k, v)?;
         }
-        Some(new_ctx)
+        Ok(Some(new_ctx))
     } else {
-        None
-    })
+        Ok(None)
+    }
+}
+
+// We'll fetch `id` function once and reuse it.
+static ID_FUNC: OnceCell<Py<PyAny>> = OnceCell::new();
+
+fn get_id_func(py: Python) -> PyResult<&PyAny> {
+    ID_FUNC
+        .get_or_try_init(|| py.eval("id", None, None).map(|f| f.into()))
+        .map(|f| f.as_ref(py))
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -31,32 +43,53 @@ fn do_visit_collection(
     remove_annotations: bool,
     seen: Option<&PySet>,
 ) -> PyResult<PyObject> {
-    // First, call visit_fn on the current object
+    // If max_depth == 0, just call visit_fn and return early
+    if max_depth == 0 {
+        let visited = if let Some(ctx) = context {
+            visit_fn.call1(py, (expr, ctx))?
+        } else {
+            visit_fn.call1(py, (expr,))?
+        };
+        return if return_data {
+            Ok(visited.to_object(py))
+        } else {
+            Ok(py.None())
+        };
+    }
+
+    // call visit_fn first
     let visited = if let Some(ctx) = context {
         visit_fn.call1(py, (expr, ctx))?
     } else {
         visit_fn.call1(py, (expr,))?
     };
 
-    // Update expr if return_data is true
     let current_expr = if return_data {
         visited.as_ref(py)
     } else {
         expr
     };
 
-    // Check max_depth and seen
-    if max_depth == 0 {
-        return if return_data {
-            Ok(current_expr.to_object(py))
-        } else {
-            Ok(py.None())
-        };
+    // Check max_depth if positive
+    if max_depth > 0 && max_depth == 1 {
+        // Next level is 0-depth, so no recursion on children
+        // Just return now if it's not a collection or if no recursion needed.
+        // But we already called visit_fn, so just return current_expr
+        // If we must return data, return visited. Otherwise None.
+        if !current_expr.is_instance_of::<PyList>() && !current_expr.is_instance_of::<PyDict>() {
+            return if return_data {
+                Ok(current_expr.to_object(py))
+            } else {
+                Ok(py.None())
+            };
+        }
+        // else we continue - we know max_depth > 1 or we handle below
     }
 
+    // Check seen if available
     if let Some(seen_set) = seen {
-        let id_fn = py.eval("id", None, None)?;
-        let obj_id = id_fn.call1((current_expr,))?;
+        let id_func = get_id_func(py)?;
+        let obj_id = id_func.call1((current_expr,))?;
         if seen_set.contains(obj_id)? {
             return if return_data {
                 Ok(current_expr.to_object(py))
@@ -131,7 +164,10 @@ fn visit_collection(
 }
 
 #[pymodule]
-fn visit_collection_rs(_py: Python<'_>, m: &PyModule) -> PyResult<()> {
+fn visit_collection_rs(py: Python<'_>, m: &PyModule) -> PyResult<()> {
+    // Pre-load the `id` function and store it in ID_FUNC
+    let _ = get_id_func(py)?; // load once
+
     m.add_function(wrap_pyfunction!(visit_collection, m)?)?;
     Ok(())
 }
