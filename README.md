@@ -10,15 +10,17 @@ this is a rust port of a recursive python function [`prefect.utilities.collectio
 - [ ] support `remove_annotations`
 - [x] support `context`
 - [x] support `return_data`
-- [ ] support `max_depth`
+- [x] support `max_depth`
 - [x] support lists
 - [x] support dicts
-- [ ] support other collections
+- [ ] support tuples
+- [ ] support sets
+- [ ] support dataclasses
+- [ ] support pydantic models
 
 <summary>progress update</summary>
 
-```markdown
-# Current Status and Next Steps
+### status quo and next steps (2024-12-07)
 
 **Current Performance:**  
 - We have a working Rust implementation that operates ~3.3x faster than the equivalent Python implementation when tested with 100,000 rounds.
@@ -66,7 +68,6 @@ this is a rust port of a recursive python function [`prefect.utilities.collectio
    After each optimization, re-benchmark to confirm improvements.
 
 By following this plan and continuing to refine the approach, we can move closer to the desired 10x speed boost over the Python implementation.
-```
 
 </details>
 
